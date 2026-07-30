@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import time
 import re
 import requests
-
 from typing import List, Tuple, Optional
 
 
@@ -25,13 +24,47 @@ class RocketJobsTool:
 
         self.site_url = site_url
 
-    def search_jobs(self, role_title: str) -> List[str]:
+    def _slug_localization(
+        self,
+        localization: str
+    ) -> str:
+        """
+        Convert localization name into RocketJobs slug.
+
+        Example:
+            "Kraków" -> "krakow"
+            "Bielsko-Biała" -> "bielsko-biala"
+            "Nowy Sącz" -> "nowy-sacz"
+        """
+
+        translation = str.maketrans({
+            "ą": "a",
+            "ć": "c",
+            "ę": "e",
+            "ł": "l",
+            "ń": "n",
+            "ó": "o",
+            "ś": "s",
+            "ż": "z",
+            "ź": "z",
+        })
+
+        localization = localization.lower().translate(translation)
+        localization = re.sub(r"\s+", "-", localization)
+        localization = re.sub(r"-+", "-", localization)
+
+        return localization.strip("-")
+
+    def search_jobs(self, role_title: str, localization: Optional[str]) -> List[str]:
         """
         Search job offers by job title.
 
         Args:
             role_title:
                 Job title to search for.
+            localization:
+            Location slug e.g. "Cracow" or None for all locations.
+
 
         Returns:
             List of job offer URLs.
@@ -55,14 +88,15 @@ class RocketJobsTool:
             options=options
         )
 
+        slug_localization = self._slug_localization(localization)
         url = self._generate_search_url(
-            role_title
+            role_title, slug_localization
         )
+        print(f"search_jobs url: {url}")
 
         try:
 
             driver.get(url)
-
             time.sleep(5)
 
             html = driver.page_source
@@ -137,20 +171,25 @@ class RocketJobsTool:
         )
 
     def _generate_search_url(
-            self,
-            role_title: str
+        self,
+        role_title: str,
+        localization: Optional[str]
     ) -> str:
 
-        search_phrase = role_title.replace(
-            " ",
-            "+"
-        )
+        search_phrase = role_title.replace(" ", "+").lower()
 
-        search_phrase = search_phrase.lower()
+        if localization:
+            slug_localization = self._slug_localization(localization)
+        else:
+            slug_localization = "wszystkie-lokalizacje"
+
+        print(
+            f"_generate_search_url url: {self.site_url}{slug_localization}?titles={search_phrase}")
 
         return (
             f"{self.site_url}"
-            f"{search_phrase}"
+            f"{slug_localization}"
+            f"?titles={search_phrase}"
         )
 
     def _remove_unnecessary_tags(
