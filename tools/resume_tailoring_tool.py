@@ -4,14 +4,14 @@ import json
 from config import config
 
 
-class JobAnalysisTool:
+class ResumeTailoringTool:
 
     def __init__(self):
 
         self.client = ollama.Client()
         self.model = config["model"]
 
-    def analyse_job_fit(
+    def tailor_resume_to_job(
             self,
             cv: str,
             offer: str
@@ -26,20 +26,12 @@ class JobAnalysisTool:
                     """
                     You are an experienced technical recruiter.
 
-                    Compare candidate CV with job offer.
+                    
 
-                    Return ONLY valid JSON.
-
-                    Format:
-
-                    {
-                        "match": true,
-                        "score": 0-100,
-                        "company": "",
-                        "reason": ""
-                    }
-
-                    match=true only if candidate is a reasonable candidate.
+                    Tailor candidate's CV to the job vacancy so that it’s a better fit, 
+                    but don’t make up experience – take everything that’s in 
+                    candidate's CV and phrase it more effectively.
+                    
                     """
                 },
                 {

@@ -11,9 +11,11 @@ from agent.prompts import SYSTEM_PROMPT
 from tools.rocket_jobs_tool import RocketJobsTool
 from tools.resume_handler_tool import ResumeHandlerTool
 from tools.job_analysis_tool import JobAnalysisTool
+from tools.resume_tailoring_tool import ResumeTailoringTool
 
 from config import config
 from langgraph.checkpoint.memory import MemorySaver
+
 
 # =====================
 # Tool initialization
@@ -23,14 +25,19 @@ rocket_tool = RocketJobsTool(
     config["site_url"]
 )
 
+
 resume_handler_tool = ResumeHandlerTool()
 
+
 analysis_tool = JobAnalysisTool()
+
+tailoring_tool = ResumeTailoringTool()
 
 
 # =====================
 # Tools
 # =====================
+
 
 search_jobs_tool = StructuredTool.from_function(
     func=rocket_tool.search_jobs,
@@ -60,14 +67,14 @@ get_resume_tool = StructuredTool.from_function(
     description="""
     Read user's stored CV.
 
-    Use when you need information about:
+    Use when you need:
     - experience
     - skills
     - education
     - projects
 
-    The CV already exists.
-    Never ask the user to upload it.
+    The CV already exists locally.
+    Never ask user to upload it.
     """
 )
 
@@ -90,11 +97,30 @@ analyse_job_fit_tool = StructuredTool.from_function(
 )
 
 
+resume_tailoring_tool = StructuredTool.from_function(
+    func=tailoring_tool.tailor_resume_to_job,
+    name="tailor_resume_to_job",
+    description="""
+    
+    Tailor candidate's CV to the job vacancy so that it’s a better fit, 
+    
+    but don’t make up experience – take everything that’s in 
+    
+    candidate's CV and phrase it more effectively.
+
+    Requires:
+    cv
+    offer
+    """
+)
+
+
 tools = [
     search_jobs_tool,
     get_job_offer_tool,
     get_resume_tool,
-    analyse_job_fit_tool
+    analyse_job_fit_tool,
+    resume_tailoring_tool
 ]
 
 
@@ -117,30 +143,41 @@ llm_with_tools = llm.bind_tools(
 # Agent node
 # =====================
 
-def agent_node(state: AgentState):
+
+def agent_node(
+        state: AgentState
+):
+
     messages = [
         SystemMessage(
             content=SYSTEM_PROMPT
         )
     ]
 
-    resume = state.get("resume")
-    resume_sent = state.get("resume_sent_to_llm", False)
+    resume = state.get(
+        "resume"
+    )
+
+    resume_sent = state.get(
+        "resume_sent_to_llm",
+        False
+    )
 
     if resume and not resume_sent:
+
         messages.append(
             SystemMessage(
                 content=f"""
 The user resume is already loaded in memory.
 
 IMPORTANT RULES:
-- Do NOT call get_resume tool.
-- Do NOT ask the user to provide the resume.
+- Do NOT call get_resume.
+- Do NOT ask user to upload resume.
 - Use this resume for:
   - career recommendations
   - job searching
   - candidate matching
-  - job offer analysis
+  - job analysis
 
 
 USER RESUME:
@@ -150,36 +187,41 @@ USER RESUME:
 """
             )
         )
-        # Oznacz, że CV zostało wysłane do LLM
+
         resume_sent = True
 
     elif not resume:
+
         messages.append(
             SystemMessage(
                 content="""
 The user resume is NOT loaded.
 
-If the user asks for:
-- suitable roles based on resume
+If user asks for:
 - job recommendations
+- finding jobs
 - candidate evaluation
-- matching jobs
+- matching offers
 
 you MUST call get_resume first.
 
-Do NOT ask the user to upload the resume.
-The resume is stored locally and available through the tool.
+Do NOT ask user to upload CV.
 """
             )
         )
 
-    messages.extend(state["messages"])
+    messages.extend(
+        state["messages"]
+    )
 
-    # <-- TO BYŁO BRANŻOWANE, TERAZ JEST POPRAWNIE
-    response = llm_with_tools.invoke(messages)
+    response = llm_with_tools.invoke(
+        messages
+    )
 
     return {
-        "messages": [response],
+        "messages": [
+            response
+        ],
         "resume_sent_to_llm": resume_sent
     }
 
@@ -189,11 +231,16 @@ The resume is stored locally and available through the tool.
 # =====================
 
 
-def save_tool_results(state: AgentState):
+def save_tool_results(
+        state: AgentState
+):
 
     last_message = state["messages"][-1]
 
-    if isinstance(last_message, ToolMessage):
+    if isinstance(
+        last_message,
+        ToolMessage
+    ):
 
         if last_message.name == "get_resume":
 
@@ -213,6 +260,7 @@ def save_tool_results(state: AgentState):
 # Decision
 # =====================
 
+
 def should_continue(
         state: AgentState
 ):
@@ -227,8 +275,9 @@ def should_continue(
 
 
 # =====================
-# Budowa grafu
+# Graph
 # =====================
+
 graph = StateGraph(
     AgentState
 )
@@ -277,7 +326,13 @@ graph.add_edge(
 )
 
 
+# =====================
+# Memory
+# =====================
+
+
 memory = MemorySaver()
+
 
 agent = graph.compile(
     checkpointer=memory
