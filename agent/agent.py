@@ -150,7 +150,7 @@ USER RESUME:
 """
             )
         )
-        # Oznacz, że CV zostało wysłane do LLM
+
         resume_sent = True
 
     elif not resume:
@@ -175,7 +175,6 @@ The resume is stored locally and available through the tool.
 
     messages.extend(state["messages"])
 
-    # <-- TO BYŁO BRANŻOWANE, TERAZ JEST POPRAWNIE
     response = llm_with_tools.invoke(messages)
 
     return {
