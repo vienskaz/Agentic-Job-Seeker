@@ -13,9 +13,12 @@ class RocketJobsTool:
     from RocketJobs.
     """
 
-    def __init__(self, site_url: str) -> None:
+    def __init__(
+            self,
+            site_url: str
+    ) -> None:
         """
-        Initialize tool.
+        Initialize RocketJobs tool.
 
         Args:
             site_url:
@@ -25,16 +28,16 @@ class RocketJobsTool:
         self.site_url = site_url
 
     def _slug_localization(
-        self,
-        localization: str
+            self,
+            localization: str
     ) -> str:
         """
         Convert localization name into RocketJobs slug.
 
-        Example:
-            "Kraków" -> "krakow"
-            "Bielsko-Biała" -> "bielsko-biala"
-            "Nowy Sącz" -> "nowy-sacz"
+        Examples:
+            Kraków -> krakow
+            Bielsko-Biała -> bielsko-biala
+            Nowy Sącz -> nowy-sacz
         """
 
         translation = str.maketrans({
@@ -49,22 +52,41 @@ class RocketJobsTool:
             "ź": "z",
         })
 
-        localization = localization.lower().translate(translation)
-        localization = re.sub(r"\s+", "-", localization)
-        localization = re.sub(r"-+", "-", localization)
+        localization = (
+            localization
+            .lower()
+            .translate(translation)
+        )
+
+        localization = re.sub(
+            r"\s+",
+            "-",
+            localization
+        )
+
+        localization = re.sub(
+            r"-+",
+            "-",
+            localization
+        )
 
         return localization.strip("-")
 
-    def search_jobs(self, role_title: str, localization: Optional[str]) -> List[str]:
+    def search_jobs(
+            self,
+            role_title: str,
+            localization: Optional[str] = None
+    ) -> List[str]:
         """
         Search job offers by job title.
 
         Args:
             role_title:
                 Job title to search for.
-            localization:
-            Location slug e.g. "Cracow" or None for all locations.
 
+            localization:
+                Optional city name.
+                None means all locations.
 
         Returns:
             List of job offer URLs.
@@ -88,15 +110,19 @@ class RocketJobsTool:
             options=options
         )
 
-        slug_localization = self._slug_localization(localization)
         url = self._generate_search_url(
-            role_title, slug_localization
+            role_title,
+            localization
         )
-        print(f"search_jobs url: {url}")
+
+        print(
+            f"search_jobs url: {url}"
+        )
 
         try:
 
             driver.get(url)
+
             time.sleep(5)
 
             html = driver.page_source
@@ -121,7 +147,10 @@ class RocketJobsTool:
             if offer.has_attr("href")
         ]
 
-    def get_job_offer(self, url: str) -> str:
+    def get_job_offer(
+            self,
+            url: str
+    ) -> str:
         """
         Download and clean job offer content.
 
@@ -130,7 +159,7 @@ class RocketJobsTool:
                 Job offer URL.
 
         Returns:
-            Clean text content of offer.
+            Clean text content.
         """
 
         headers = {
@@ -171,26 +200,40 @@ class RocketJobsTool:
         )
 
     def _generate_search_url(
-        self,
-        role_title: str,
-        localization: Optional[str]
+            self,
+            role_title: str,
+            localization: Optional[str]
     ) -> str:
 
-        search_phrase = role_title.replace(" ", "+").lower()
+        search_phrase = (
+            role_title
+            .replace(" ", "+")
+            .lower()
+        )
 
         if localization:
-            slug_localization = self._slug_localization(localization)
+
+            slug_localization = self._slug_localization(
+                localization
+            )
+
         else:
-            slug_localization = "wszystkie-lokalizacje"
 
-        print(
-            f"_generate_search_url url: {self.site_url}{slug_localization}?titles={search_phrase}")
+            slug_localization = (
+                "wszystkie-lokalizacje"
+            )
 
-        return (
+        url = (
             f"{self.site_url}"
             f"{slug_localization}"
             f"?titles={search_phrase}"
         )
+
+        print(
+            f"_generate_search_url url: {url}"
+        )
+
+        return url
 
     def _remove_unnecessary_tags(
             self,
@@ -214,6 +257,7 @@ class RocketJobsTool:
                 "form"
             ]
         ):
+
             tag.decompose()
 
     def _find_best_container(
@@ -293,6 +337,7 @@ class RocketJobsTool:
             )
 
         if not candidates:
+
             return soup.body or soup
 
         candidates.sort(
@@ -336,7 +381,7 @@ class RocketJobsTool:
             ):
 
                 result.append(
-                    f"\n## {text}\n"
+                    text
                 )
 
             elif element.name in [
@@ -411,14 +456,9 @@ class RocketJobsTool:
             text
         )
 
-        text = text.replace(
-            "##",
-            ""
-        )
-
         lines = []
 
-        previous: Optional[str] = None
+        previous = None
 
         for line in text.splitlines():
 

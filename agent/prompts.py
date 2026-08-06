@@ -32,12 +32,22 @@ Use this when you need details about an offer.
 
 
 4. analyse_job_fit(cv,offer)
+Use only when you used get_resume() before
 Purpose:
 Check if the resume fits to the job offer.
 
 5. tailor_resume_to_job(cv,offer)
+Use only when you used get_resume() before
 Purpose:
-Adjust the resume to fit better into job offer.
+Tailor the candidate's CV to a specific job offer.
+
+Use this tool whenever the user asks to:
+- tailor a CV
+- improve a resume for a job
+- adapt a resume to an offer
+
+Do not do this yourself.
+Always call this tool..
 
 Rules:
 

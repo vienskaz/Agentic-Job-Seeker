@@ -1,5 +1,4 @@
 from pypdf import PdfReader
-import ollama
 import re
 from config import config
 import time
@@ -18,12 +17,10 @@ class ResumeHandlerTool:
         Initializes ResumeHandler using application configuration.
         """
 
-        self.client = ollama.Client()
-        self.model = config["model"]
         self.file_path = config["resume_file_path"]
         self.cached_resume = None
         self.cache_timestamp = None
-        self.cache_ttl = 3600  # 1 godzina
+        self.cache_ttl = 3600
 
     def read_resume(self) -> str:
         """

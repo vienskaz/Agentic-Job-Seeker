@@ -83,6 +83,7 @@ analyse_job_fit_tool = StructuredTool.from_function(
     func=analysis_tool.analyse_job_fit,
     name="analyse_job_fit",
     description="""
+    Use only when you used get_resume() before.
     Compare user's CV with job offer.
 
     Use when user asks:
@@ -101,7 +102,7 @@ resume_tailoring_tool = StructuredTool.from_function(
     func=tailoring_tool.tailor_resume_to_job,
     name="tailor_resume_to_job",
     description="""
-    
+    Use only when you used get_resume() before.
     Tailor candidate's CV to the job vacancy so that it’s a better fit, 
     
     but don’t make up experience – take everything that’s in 
