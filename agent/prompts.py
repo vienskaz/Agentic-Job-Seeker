@@ -16,10 +16,14 @@ Use this when you need information about user's experience,
 skills, education or previous projects. 
 After first use do not use that again.
 
-2. search_jobs(role_title)
+2. search_jobs(role_title, localization: Optional[str])
+
 Purpose:
-Search for job offers for a specific role.
-Use this only when the user explicitly wants to search for jobs.
+Search for job offers matching a specific job title.
+Use this tool only when the user explicitly asks to search for job offers.
+Arguments:
+- role_title: Job title to search for.
+- localization: City or location specified by the user. If the user does not specify a location, pass None.
 
 3. get_job_offer(url)
 Purpose:

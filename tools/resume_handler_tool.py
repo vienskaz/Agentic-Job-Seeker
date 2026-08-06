@@ -85,7 +85,7 @@ class ResumeHandlerTool:
         return text.strip()
 
     def get_resume(self):
-        # Sprawdź czy cache jest świeży
+
         if self.cached_resume and self.cache_timestamp:
             if time.time() - self.cache_timestamp < self.cache_ttl:
                 return self.cached_resume
